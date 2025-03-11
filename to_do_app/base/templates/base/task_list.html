@@ -6,11 +6,16 @@
         <h1> 
             {% if request.user.is_authenticated %}
             Hello {{request.user|title}}
+            {% if not complete %}
+            <h3 style="margin:0">You have <i>{{uncomplete_count}}</i> incomplete task{{ uncomplete_count|pluralize:"s" }}</h3>
+            {% else %}
+            <h3 style="margin:0">You have <i>{{total_count}}</i> task{{ total_count|pluralize:"s" }} all completed. Well Done!</h3>
+            {% endif %}
             {% else %}
             You are logged out please log in.
             {% endif %}
             </h1>
-        <h3 style="margin:0">You have <i>{{count}}</i> incomplete task{{ count|pluralize:"s" }}</h3>
+        
     </div>
 
     {% if request.user.is_authenticated %}
@@ -18,23 +23,21 @@
     <a href="{% url 'login' %}">Login</a> {% endif %}
 </div>
 
-
+<!-- Search -->
+{% if request.user.is_authenticated %}
 <div id="search-add-wrapper">
     <form method="GET" style="display: flex;">
-        <input type='text' name='search-area' placeholder="Search your task" value="{{search_input}}">
+        <input type='text' name='search-area' placeholder="Search your task" value="{{search_in}}">
         <input class="button" type="submit" value='Search'>
     </form>
     {% if task_list|length > 0 %}
     <a id="add-link" href="{% url 'task-create' %}">&#x2b;</a>
     {% endif %}
 </div>
+{% endif %}
+<!-- -->
 
 
-<!-- Hidden form. Form submits new item positions -->
-{% comment %} <form style="display: none;" id="reorderForm" method="post" action="{% url 'task-reorder' %}">
-    {% csrf_token %}
-    <input type="hidden" id="positionInput" name="position">
-</form> {% endcomment %}
 
 
 <div id="tasklist" class="task-items-wrapper">
@@ -49,12 +52,11 @@
             <a href="{% url 'task-update' task.id %}">{{task}}</a> {% endif %}
         </div>
         <div class="task-controls">
-            <a class="delete-link" href="{% url 'task-delete' task.id %}">&#215;</a>
-            <span class="handle">&nbsp;&#10247;</span>
+            <a class="delete-link" href="{% url 'task-delete' task.id %}" style="padding-right: 30px;">&#215;</a>
         </div>
     </div>
     
-
+    
     {% empty %}
     <div style="text-align: center; padding-bottom: 10px; line-height: 1em;">
         <h3>No new tasks are created.</h3>
@@ -64,30 +66,5 @@
     {% endif %}
 </div>
 
-<script>
-    var taskList = document.getElementById("tasklist");
-    var reorderForm = document.getElementById("reorderForm");
-    var positionInput = document.getElementById("positionInput");
-
-    let sortable = Sortable.create(taskList, {
-        handle: '.handle',
-        ghostClass: 'dropArea',
-        chosenClass: 'selectedTask',
-
-    });
-
-    function reordering() {
-        const rows = document.getElementsByClassName("task-wrapper");
-        let pos = [];
-        for (let row of rows) {
-            pos.push(row.dataset.position);
-        }
-        console.log(pos.join(","))
-        positionInput.value = pos.join(',');
-        reorderForm.submit();
-    }
-
-    document.ondrop = reordering
-</script>
 
 {% endblock content %}

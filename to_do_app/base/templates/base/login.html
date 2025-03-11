@@ -9,7 +9,9 @@
     <form method="POST">
         {% csrf_token %}
         {% comment %} {{form.as_p}} {% endcomment %}
-        
+        {% if error %}
+        {{ error }}
+        {% endif %}
         <label>Username</label>
         <input type="text" name="username" maxlength="150" autofocus="" required="" id="id_username">
             

@@ -5,22 +5,40 @@ from .forms import TaskForm, UserForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from .checkers import complete_check
 # Create your views here.
 
 
 def list(request):
     page = 'base/task_list.html'
 
-    if request.method == 'GET':
-        task_list = Task.objects.all()
-        
+    if request.method == 'GET':        
+        # Only shows tasks when user is logged in
         if request.user.is_authenticated:
-            task_list = Task.objects.filter(owner=request.user)
+            # Search functionality
+            
+            if request.GET.get('search-area'):
+                
+                task_list = Task.objects.filter(owner=request.user, name__icontains=request.GET.get('search-area'))
+                context = {
+                    'task_list': task_list,
+                    'search_in': request.GET.get('search-area'),
+                    'complete': complete_check(lst=task_list),
+                    'uncomplete_count': task_list.filter(complete=False).count(),
+                    'total_count': task_list.count()
+                }
+            else:
+                task_list = Task.objects.filter(owner=request.user)
+                context = {
+                    'task_list' : task_list,
+                    'complete': complete_check(task_list),
+                    'uncomplete_count': task_list.filter(complete=False).count(),
+                    'total_count': task_list.count()
+                }
 
-        context = {
-            'task_list' : task_list
-        }
-        return render(request, page, context)
+            return render(request, page, context)
+        
+        return render(request, page)
     
     
 def register(request):
@@ -85,6 +103,7 @@ def create(request):
         form = TaskForm()
     
     return render(request, page, {'form' : form})
+
 @login_required(login_url='/login')
 def update(request, pk):
     page = 'base/task_form.html'
@@ -104,6 +123,7 @@ def update(request, pk):
 
 
     return render(request, page, {'form': form})
+
 @login_required(login_url='/login')
 def delete(request, pk):
     page = 'base/task_confirm_delete.html'
@@ -114,6 +134,7 @@ def delete(request, pk):
  
     return render(request, page, {'task': task})
 
+@login_required(login_url='/login')
 def logout_view(request):
     logout(request)
     return redirect('list')
